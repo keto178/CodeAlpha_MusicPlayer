@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Player - Stream & Discover</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./css.css">
+    <!-- Lucide Icons Library -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <!-- Main Top Header -->
+    <header class="main-header">
+        <div class="container header-container">
+            <div class="logo">
+                <div class="logo-icon-wrapper">
+                    <img src="./logo.svg" alt="Music Player Logo" class="logo-img">
+                </div>
+                <div class="logo-info">
+                    <span class="logo-name">Music <span class="logo-highlight">Player</span></span>
+                </div>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="searchBar">
+                <div class="search-input-box">
+                    <i data-lucide="search" class="search-svg"></i>
+                    <input type="text" id="inputSearch" placeholder="Search tracks, artists, or genres..." autocomplete="off">
+                </div>
+                <button id="btnSearch" type="button" aria-label="Search">
+                    <span>Search</span>
+                    <i data-lucide="arrow-right" class="btn-icon"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <div class="container player-layout">
+            
+            <!-- Player Card -->
+            <section class="player-card" aria-label="Music Player">
+                <!-- Status Badge / Track Counter -->
+                <div class="card-header">
+                    <span class="now-playing-badge">
+                        <span class="pulse-dot"></span>
+                        <span id="playerStatus">Ready</span>
+                    </span>
+                    <span id="trackCounter" class="track-counter">0 / 0</span>
+                </div>
+
+                <!-- Album Art & Vinyl Glow Section -->
+                <div class="track-art-wrapper">
+                    <div class="album-glow" id="albumGlow"></div>
+                    <div class="trackArt" id="trackArtContainer">
+                        <img id="trackArt" src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&auto=format&fit=crop&q=80" alt="Album Cover Art">
+                        <div class="vinyl-center-hole"></div>
+                    </div>
+                </div>
+
+                <!-- Track Details -->
+                <div class="track-meta">
+                    <h2 id="trackTitle" class="track-title">Loading Track...</h2>
+                    <p id="trackArtist" class="track-artist">Connecting to Jamendo...</p>
+                    <p id="trackAlbum" class="track-album"></p>
+                </div>
+
+                <!-- Progress Bar & Timestamps -->
+                <div class="progress-section">
+                    <div class="progress-bar-container">
+                        <input type="range" id="progressBar" min="0" max="100" value="0" step="0.1" aria-label="Track progress">
+                    </div>
+                    <div class="time-display">
+                        <span id="currentTime">0:00</span>
+                        <span id="totalDuration">0:00</span>
+                    </div>
+                </div>
+
+                <!-- Playback Controls -->
+                <div class="controls-section">
+                    <button id="btnShuffle" class="control-btn small-btn" title="Shuffle" aria-label="Shuffle playlist">
+                        <i data-lucide="shuffle"></i>
+                    </button>
+
+                    <button id="btnPrev" class="control-btn action-btn" title="Previous" aria-label="Previous track">
+                        <i data-lucide="skip-back"></i>
+                    </button>
+
+                    <button id="btnPlayPause" class="control-btn play-btn" title="Play" aria-label="Play or pause">
+                        <i data-lucide="play" id="playPauseIcon"></i>
+                    </button>
+
+                    <button id="btnNext" class="control-btn action-btn" title="Next" aria-label="Next track">
+                        <i data-lucide="skip-forward"></i>
+                    </button>
+
+                    <button id="btnRepeat" class="control-btn small-btn" title="Repeat" aria-label="Toggle repeat">
+                        <i data-lucide="repeat"></i>
+                    </button>
+                </div>
+
+                <!-- Volume Section -->
+                <div class="volume-section">
+                    <button id="btnMute" class="volume-btn" title="Mute/Unmute" aria-label="Mute or unmute volume">
+                        <i data-lucide="volume-2" id="volumeIcon" class="volume-icon"></i>
+                    </button>
+                    <div class="volume-slider-wrapper">
+                        <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.8" aria-label="Volume level">
+                    </div>
+                </div>
+            </section>
+
+            <!-- Interactive Playlist Section -->
+            <section class="playlist-section" aria-label="Up Next Playlist">
+                <div class="playlist-header">
+                    <div class="playlist-title-group">
+                        <i data-lucide="list-music" class="playlist-icon"></i>
+                        <h3>Up Next</h3>
+                    </div>
+                    <span id="playlistCount" class="playlist-count">5 tracks</span>
+                </div>
+
+                <div class="playlist-container" id="playlistContainer">
+                    <!-- Playlist items dynamically rendered via JavaScript -->
+                    <div class="playlist-placeholder">
+                        <div class="spinner"></div>
+                        <p>Fetching tracks from Jamendo...</p>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Hidden Audio Player -->
+    <audio id="audioPlayer" preload="auto"></audio>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast" role="alert" aria-live="polite"></div>
+
+    <script src="./script.js"></script>
+</body>
+</html>
