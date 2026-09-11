@@ -51,21 +51,26 @@ CodeAlpha_MusicPlayer/
 ├── script.js           # Core player logic & Jamendo API integration
 ├── logo.svg            # Custom vector branding
 └── README.md           # Documentation
-⚡ Getting Started
-Clone the repository:
 
-Bash
-git clone [https://github.com/keto178/CodeAlpha_MusicPlayer.git](https://github.com/keto178/CodeAlpha_MusicPlayer.git)
-Navigate into the directory:
+## ⚡ Getting Started
 
-Bash
-cd CodeAlpha_MusicPlayer
-Run locally:
-Open index.html using a local web server (e.g., VS Code Live Server extension or npx serve) to ensure unrestricted cross-origin API calls.
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/keto178/CodeAlpha_MusicPlayer.git
+   ```
 
-👤 Author
-Kerolos Eid
+2. **Navigate into the directory:**
+   ```bash
+   cd CodeAlpha_MusicPlayer
+   ```
 
-Portfolio: keroloseid.com
+3. **Run locally:**
+   Open `index.html` using a local web server (e.g., VS Code **Live Server** extension or `npx serve`) to ensure unrestricted cross-origin API calls.
 
-GitHub: @keto178
+---
+
+## 👤 Author
+
+**Kerolos Eid**
+- Portfolio: [keroloseid.com](https://www.keroloseid.com/en)
+- GitHub: [@keto178](https://github.com/keto178)
