@@ -8,7 +8,7 @@ Developed as part of the **Frontend Development Internship** at **CodeAlpha**.
 
 ## 🚀 Live Demo & Links
 
-- **Live Preview:** [View Demo on Vercel](https://code-alpha-image-gallery-bice.vercel.app/)
+- **Live Preview:** [View Demo on Vercel](https://code-alpha-music-player-ruby.vercel.app/)
 - **Source Code:** [GitHub Repository](https://github.com/keto178/CodeAlpha_MusicPlayer)
 - **Portfolio:** [keroloseid.com](https://www.keroloseid.com/en)
 
