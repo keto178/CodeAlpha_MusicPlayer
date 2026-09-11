@@ -9,6 +9,73 @@ const BASE_API_URL = "https://api.jamendo.com/v3.0/tracks/";
 const DEFAULT_LIMIT = 10;
 const FALLBACK_ART = "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&auto=format&fit=crop&q=80";
 
+// --- Curated Backup Audio Library (Instant Playback & Zero-Offline Failure) ---
+const FALLBACK_TRACKS = [
+    {
+        id: "fb-1",
+        name: "RED LIGHT",
+        artist_name: "Egor Budennyy",
+        album_name: "RED LIGHT",
+        duration: 190,
+        audio: "https://prod-1.storage.jamendo.com/?trackid=1932670&format=mp31&from=fLMxElvaMdXWCfKv5n5V7A%3D%3D%7CY1Jxwt3A1doNzqI%2BJ3InDw%3D%3D",
+        image: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&auto=format&fit=crop&q=80"
+    },
+    {
+        id: "fb-2",
+        name: "What Is Love",
+        artist_name: "Melanie Ungar",
+        album_name: "What Is Love",
+        duration: 212,
+        audio: "https://prod-1.storage.jamendo.com/?trackid=1204669&format=mp31&from=bbEJ2RtJ09PLUDOafGvs3Q%3D%3D%7ChCS8QRq1OXetXN%2Fqj8zWcA%3D%3D",
+        image: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500&auto=format&fit=crop&q=80"
+    },
+    {
+        id: "fb-3",
+        name: "Acoustic Breeze",
+        artist_name: "Benjamin Tissot",
+        album_name: "Acoustic Memories",
+        duration: 171,
+        audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+        image: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&auto=format&fit=crop&q=80"
+    },
+    {
+        id: "fb-4",
+        name: "Midnight Horizon",
+        artist_name: "Eclipse Dreams",
+        album_name: "Synthwave Nights",
+        duration: 245,
+        audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+        image: "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=500&auto=format&fit=crop&q=80"
+    },
+    {
+        id: "fb-5",
+        name: "Neon Cascade",
+        artist_name: "Cyber Pulse",
+        album_name: "Digital Realms",
+        duration: 198,
+        audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+        image: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=500&auto=format&fit=crop&q=80"
+    },
+    {
+        id: "fb-6",
+        name: "Golden Sunset",
+        artist_name: "Solaris",
+        album_name: "Chill Ambient",
+        duration: 215,
+        audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
+        image: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=500&auto=format&fit=crop&q=80"
+    },
+    {
+        id: "fb-7",
+        name: "Cosmic Odyssey",
+        artist_name: "Astral Journey",
+        album_name: "Space Horizons",
+        duration: 232,
+        audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3",
+        image: "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=500&auto=format&fit=crop&q=80"
+    }
+];
+
 // --- State ---
 let songs = [];
 let currentIndex = 0;
@@ -48,6 +115,9 @@ const btnClearSearch = document.getElementById("btnClearSearch");
 const playlistContainer = document.getElementById("playlistContainer");
 const playlistCount = document.getElementById("playlistCount");
 const toastEl = document.getElementById("toast");
+const btnLocalFiles = document.getElementById("btnLocalFiles");
+const localAudioInput = document.getElementById("localAudioInput");
+const btnRetryJamendo = document.getElementById("btnRetryJamendo");
 
 // --- Handle Image Errors ---
 trackArt.addEventListener("error", () => {
@@ -87,36 +157,60 @@ function showToast(message, isError = false) {
     }, 2800);
 }
 
+// --- Fetch with AbortController Timeout (Prevents hanging forever) ---
+async function fetchWithTimeout(url, options = {}, timeoutMs = 5000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+        const response = await fetch(url, { ...options, signal: controller.signal });
+        clearTimeout(timer);
+        return response;
+    } catch (err) {
+        clearTimeout(timer);
+        throw err;
+    }
+}
+
 // --- Multi-tier Jamendo Search Service ---
 async function queryJamendoTracks(searchQuery = "") {
     const trimmed = searchQuery.trim();
     if (!trimmed) {
-        const defaultUrl = `${BASE_API_URL}?client_id=${CLIENT_ID}&format=jsonpretty&limit=${DEFAULT_LIMIT}&order=popularity_total`;
-        const res = await fetch(defaultUrl);
-        const data = await res.json();
-        return data.results || [];
+        try {
+            const defaultUrl = `${BASE_API_URL}?client_id=${CLIENT_ID}&format=jsonpretty&limit=${DEFAULT_LIMIT}&order=popularity_total`;
+            const res = await fetchWithTimeout(defaultUrl, {}, 5000);
+            if (!res.ok) return [];
+            const data = await res.json();
+            return (data && data.results && data.results.length > 0) ? data.results : [];
+        } catch (e) {
+            console.warn("Jamendo default query error or timeout:", e);
+            return [];
+        }
     }
 
-    // 1. Primary Search: 'search' param handles any string, single letters (e.g. 't'), words, and genres
+    // 1. Primary Search
     try {
         const primaryUrl = `${BASE_API_URL}?client_id=${CLIENT_ID}&format=jsonpretty&limit=${DEFAULT_LIMIT}&search=${encodeURIComponent(trimmed)}&order=popularity_total`;
-        const res = await fetch(primaryUrl);
-        const data = await res.json();
-        if (data.results && data.results.length > 0) {
-            return data.results;
+        const res = await fetchWithTimeout(primaryUrl, {}, 5000);
+        if (res.ok) {
+            const data = await res.json();
+            if (data.results && data.results.length > 0) {
+                return data.results;
+            }
         }
     } catch (e) {
-        console.warn("Primary search query error:", e);
+        console.warn("Primary search query error or timeout:", e);
     }
 
     // 2. Fallback: namesearch (if >= 2 characters)
     if (trimmed.length >= 2) {
         try {
             const nameUrl = `${BASE_API_URL}?client_id=${CLIENT_ID}&format=jsonpretty&limit=${DEFAULT_LIMIT}&namesearch=${encodeURIComponent(trimmed)}&order=popularity_total`;
-            const res = await fetch(nameUrl);
-            const data = await res.json();
-            if (data.results && data.results.length > 0) {
-                return data.results;
+            const res = await fetchWithTimeout(nameUrl, {}, 4000);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.results && data.results.length > 0) {
+                    return data.results;
+                }
             }
         } catch (e) {
             console.warn("Namesearch query error:", e);
@@ -125,29 +219,34 @@ async function queryJamendoTracks(searchQuery = "") {
         // 3. Fallback: tags / genre search
         try {
             const tagUrl = `${BASE_API_URL}?client_id=${CLIENT_ID}&format=jsonpretty&limit=${DEFAULT_LIMIT}&tags=${encodeURIComponent(trimmed)}&order=popularity_total`;
-            const res = await fetch(tagUrl);
-            const data = await res.json();
-            if (data.results && data.results.length > 0) {
-                return data.results;
+            const res = await fetchWithTimeout(tagUrl, {}, 4000);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.results && data.results.length > 0) {
+                    return data.results;
+                }
             }
         } catch (e) {
             console.warn("Tag query error:", e);
         }
-
-        // 4. Fallback: artist search
-        try {
-            const artistUrl = `${BASE_API_URL}?client_id=${CLIENT_ID}&format=jsonpretty&limit=${DEFAULT_LIMIT}&artist_name=${encodeURIComponent(trimmed)}&order=popularity_total`;
-            const res = await fetch(artistUrl);
-            const data = await res.json();
-            if (data.results && data.results.length > 0) {
-                return data.results;
-            }
-        } catch (e) {
-            console.warn("Artist query error:", e);
-        }
     }
 
     return [];
+}
+
+// --- Load Curated Fallback Library ---
+function loadFallbackLibrary(noticeMessage = "") {
+    songs = [...FALLBACK_TRACKS];
+    currentIndex = 0;
+    loadTrack(currentIndex);
+    renderPlaylist();
+    if (noticeMessage) {
+        showToast(noticeMessage);
+    }
+    if (btnRetryJamendo) {
+        btnRetryJamendo.style.display = "inline-flex";
+        refreshIcons();
+    }
 }
 
 // --- Fetch Initial Tracks on Page Load or Search ---
@@ -169,41 +268,62 @@ async function fetchTracks(searchQuery = "") {
             playlistContainer.innerHTML = `
                 <div class="playlist-placeholder">
                     <div class="spinner"></div>
-                    <p>Loading top tracks from Jamendo...</p>
+                    <p>Connecting to Jamendo...</p>
                 </div>
             `;
         }
 
         const results = await queryJamendoTracks(searchQuery);
 
-        if (!results || results.length === 0) {
+        if (results && results.length > 0) {
+            songs = results;
+            currentIndex = 0;
+            loadTrack(currentIndex);
+            renderPlaylist();
+
+            if (btnRetryJamendo) btnRetryJamendo.style.display = "none";
+
             if (isSearching) {
-                showToast(`No tracks found for "${searchQuery}"`, true);
-                renderPlaylist(); // keep previous tracks in playlist
+                showToast(`Found ${results.length} tracks on Jamendo`);
+                playTrack();
             } else {
-                showToast("Failed to fetch initial tracks.", true);
+                showToast("Connected to Jamendo");
             }
             return;
         }
 
-        songs = results;
-        currentIndex = 0;
-        loadTrack(currentIndex);
-        renderPlaylist();
-
+        // --- If No Tracks or Jamendo Unreachable ---
         if (isSearching) {
-            showToast(`Found ${results.length} tracks for "${searchQuery}"`);
-            playTrack();
+            const q = searchQuery.toLowerCase();
+            const matchedFallback = FALLBACK_TRACKS.filter(t => 
+                t.name.toLowerCase().includes(q) || 
+                t.artist_name.toLowerCase().includes(q) || 
+                (t.album_name && t.album_name.toLowerCase().includes(q))
+            );
+
+            if (matchedFallback.length > 0) {
+                songs = matchedFallback;
+                currentIndex = 0;
+                loadTrack(currentIndex);
+                renderPlaylist();
+                showToast(`Found ${matchedFallback.length} track(s) in curated library`);
+                playTrack();
+            } else {
+                showToast(`No tracks found for "${searchQuery}"`, true);
+                if (songs.length === 0) {
+                    loadFallbackLibrary("Loaded curated music library");
+                } else {
+                    renderPlaylist();
+                }
+            }
+        } else {
+            // Initial load failed or timed out -> Instant fallback!
+            loadFallbackLibrary("Loaded curated library (Jamendo unreachable)");
         }
 
     } catch (error) {
         console.error("Error fetching tracks:", error);
-        showToast("Network error while connecting to Jamendo.", true);
-        playlistContainer.innerHTML = `
-            <div class="playlist-placeholder">
-                <p style="color: #ef4444;">Failed to load music. Please check your connection.</p>
-            </div>
-        `;
+        loadFallbackLibrary("Loaded curated library (Jamendo offline)");
     } finally {
         btnSearch.disabled = false;
         btnSearch.style.opacity = "1";
@@ -497,15 +617,70 @@ if (inputSearch && btnClearSearch) {
     });
 }
 
+// --- Local Files & Jamendo Retry Handlers ---
+if (btnRetryJamendo) {
+    btnRetryJamendo.addEventListener("click", () => {
+        showToast("Connecting to Jamendo...");
+        fetchTracks("", true);
+    });
+}
+
+if (btnLocalFiles && localAudioInput) {
+    btnLocalFiles.addEventListener("click", () => {
+        localAudioInput.click();
+    });
+
+    localAudioInput.addEventListener("change", (e) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+
+        const newTracks = files.map((file, idx) => {
+            const url = URL.createObjectURL(file);
+            const rawName = file.name.replace(/\.[^/.]+$/, "");
+            return {
+                id: `local-${Date.now()}-${idx}`,
+                name: rawName,
+                artist_name: "Local Audio",
+                album_name: "My Music",
+                duration: 0,
+                audio: url,
+                image: FALLBACK_ART
+            };
+        });
+
+        const startIndex = songs.length;
+        songs = [...songs, ...newTracks];
+        renderPlaylist();
+        showToast(`Added ${newTracks.length} local track(s)`);
+
+        if (startIndex === 0 || audio.paused) {
+            currentIndex = startIndex;
+            loadTrack(currentIndex);
+            playTrack();
+        }
+        localAudioInput.value = "";
+    });
+}
+
 // --- Render Playlist UI ---
 function renderPlaylist() {
     if (!songs || songs.length === 0) {
         playlistContainer.innerHTML = `
             <div class="playlist-placeholder">
                 <p>No tracks available.</p>
+                <button class="retry-btn" id="btnEmptyFallback">
+                    <i data-lucide="music"></i> <span>Load Curated Music</span>
+                </button>
             </div>
         `;
+        const btnEmptyFallback = document.getElementById("btnEmptyFallback");
+        if (btnEmptyFallback) {
+            btnEmptyFallback.addEventListener("click", () => {
+                loadFallbackLibrary("Loaded curated library");
+            });
+        }
         playlistCount.textContent = "0 tracks";
+        refreshIcons();
         return;
     }
 

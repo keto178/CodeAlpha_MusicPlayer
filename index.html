@@ -125,14 +125,23 @@
                         <i data-lucide="list-music" class="playlist-icon"></i>
                         <h3>Up Next</h3>
                     </div>
-                    <span id="playlistCount" class="playlist-count">5 tracks</span>
+                    <div class="playlist-header-actions">
+                        <input type="file" id="localAudioInput" accept="audio/*" multiple style="display: none;">
+                        <button id="btnLocalFiles" class="playlist-header-btn" title="Add local audio files" aria-label="Add local audio files">
+                            <i data-lucide="folder-plus"></i>
+                        </button>
+                        <button id="btnRetryJamendo" class="playlist-header-btn" title="Reload from Jamendo" aria-label="Reload Jamendo tracks" style="display: none;">
+                            <i data-lucide="refresh-cw"></i>
+                        </button>
+                        <span id="playlistCount" class="playlist-count">0 tracks</span>
+                    </div>
                 </div>
 
                 <div class="playlist-container" id="playlistContainer">
                     <!-- Playlist items dynamically rendered via JavaScript -->
                     <div class="playlist-placeholder">
                         <div class="spinner"></div>
-                        <p>Fetching tracks from Jamendo...</p>
+                        <p>Loading tracks...</p>
                     </div>
                 </div>
             </section>
